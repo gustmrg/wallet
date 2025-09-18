@@ -1,0 +1,6 @@
+@DW.API_HostAddress = http://localhost:5189
+
+GET {{DW.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
