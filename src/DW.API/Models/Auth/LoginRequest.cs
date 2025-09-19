@@ -1,6 +1,6 @@
-namespace DW.Application.Models.Auth;
+namespace DW.API.Models.Auth;
 
-public class RegisterRequest
+public class LoginRequest
 {
     public string Email { get; set; }
     public string Password { get; set; }

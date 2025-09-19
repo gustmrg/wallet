@@ -22,11 +22,11 @@ public class JwtTokenService : ITokenService
         _jwtConfig.Validate();
     }
 
-    public string GenerateAccessTokenAsync(string userId, string email)
+    public string GenerateAccessToken(Guid userId, string email)
     {
         try
         {
-            if (string.IsNullOrEmpty(userId))
+            if (userId == Guid.Empty)
                 throw new ArgumentException("User ID is required", nameof(userId));
 
             if (string.IsNullOrEmpty(email))
@@ -61,11 +61,11 @@ public class JwtTokenService : ITokenService
         }
     }
 
-    private static List<Claim> BuildClaims(string userId, string email, DateTime issueTime)
+    private static List<Claim> BuildClaims(Guid userId, string email, DateTime issueTime)
     {
         var claims = new List<Claim>
         {
-            new(JwtRegisteredClaimNames.Sub, userId),
+            new(JwtRegisteredClaimNames.Sub, userId.ToString()),
             new(JwtRegisteredClaimNames.Email, email),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new(JwtRegisteredClaimNames.Iat, 

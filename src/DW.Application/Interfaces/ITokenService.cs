@@ -12,5 +12,5 @@ public interface ITokenService
     /// Generates a new JWT access token containing user claims.
     /// The token will be self-validating and stateless.
     /// </summary>
-    string GenerateAccessTokenAsync(string userId, string email);
+    string GenerateAccessToken(Guid userId, string email);
 }
