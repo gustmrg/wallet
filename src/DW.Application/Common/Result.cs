@@ -1,4 +1,4 @@
-namespace DW.Domain.Common;
+namespace DW.Application.Common;
 
 public class Result<T>
 {
@@ -24,8 +24,10 @@ public class Result<T>
 public enum ErrorType
 {
     NotFound,
-    ValidationError,
-    BusinessLogicError,
+    Validation,
+    BusinessLogic,
     Unauthorized,
-    Forbidden
+    Forbidden,
+    Conflict,
+    Internal
 }
