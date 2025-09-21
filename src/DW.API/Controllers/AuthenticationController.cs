@@ -1,13 +1,13 @@
-using System.Linq;
 using DW.API.Models.Auth;
+using DW.API.Validations;
+using DW.Application.Common;
 using DW.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DW.API.Controllers;
 
-[ApiController]
 [Route("api/auth")]
-public class AuthenticationController : ControllerBase
+public class AuthenticationController : BaseApiController
 {
     private readonly IUserManagementService _userManagementService;
     private readonly ITokenService _tokenService;
@@ -26,18 +26,14 @@ public class AuthenticationController : ControllerBase
     [HttpPost("register")]
     public async Task<ActionResult<RegisterResponse>> Register(RegisterRequest request)
     {
-        if (!ModelState.IsValid)
-        {
-            var errors = ModelState.Values
-                .SelectMany(v => v.Errors)
-                .Select(e => e.ErrorMessage)
-                .ToArray();
+        var validator = new RegisterRequestValidator();
+        var validationResult = validator.Validate(request);
 
-            return BadRequest(new RegisterResponse
-            {
-                IsSuccess = false,
-                Message = string.Join("; ", errors)
-            });
+        if (!validationResult.IsValid)
+        {
+            var validationErrors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+            var failureResult = Result<RegisterResponse>.Failure(validationErrors, ErrorType.Validation);
+            return HandleResult(failureResult);    
         }
 
         var registerResult = await _userManagementService.RegisterUserAsync(request.Email, request.Password);

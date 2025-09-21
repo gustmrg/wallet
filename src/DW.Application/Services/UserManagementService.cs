@@ -26,18 +26,6 @@ public class UserManagementService : IUserManagementService
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(email))
-                return Result<UserDto>.Failure("Email is required", ErrorType.Validation);
-
-            if (string.IsNullOrWhiteSpace(password))
-                return Result<UserDto>.Failure("Password is required", ErrorType.Validation);
-
-            if (!IsValidEmail(email))
-                return Result<UserDto>.Failure("Invalid email format", ErrorType.Validation);
-
-            if (!IsValidPassword(password))
-                return Result<UserDto>.Failure("Password must be at least 8 characters long and contain uppercase, lowercase, number and special character", ErrorType.Validation);
-
             var existingUser = await _userRepository.GetByEmailAsync(email);
             if (existingUser != null)
                 return Result<UserDto>.Failure("User with this email already exists", ErrorType.Conflict);
@@ -62,27 +50,5 @@ public class UserManagementService : IUserManagementService
             _logger.LogError(ex, "Failed to register user with email {Email}: {ErrorMessage}", email, ex.Message);
             return Result<UserDto>.Failure("An error occurred while creating the user account", ErrorType.Internal);
         }
-    }
-
-    private static bool IsValidEmail(string email)
-    {
-        try
-        {
-            var addr = new System.Net.Mail.MailAddress(email);
-            return addr.Address == email;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    private static bool IsValidPassword(string password)
-    {
-        return password.Length >= 8 &&
-               password.Any(char.IsUpper) &&
-               password.Any(char.IsLower) &&
-               password.Any(char.IsDigit) &&
-               password.Any(ch => !char.IsLetterOrDigit(ch));
     }
 }
