@@ -7,10 +7,10 @@ namespace DW.Application.Common;
 /// </summary>
 public class Result
 {
-    protected Result(bool isSuccess, IEnumerable<string> errors)
+    protected Result(bool isSuccess, IEnumerable<Error> errors)
     {
         IsSuccess = isSuccess;
-        Errors = errors?.ToList() ?? new List<string>();
+        Errors = errors?.ToList() ?? new List<Error>();
     }
 
     /// <summary>
@@ -26,33 +26,36 @@ public class Result
     /// <summary>
     /// Collection of error messages if the operation failed
     /// </summary>
-    public List<string> Errors { get; }
-
+    public List<Error> Errors { get; }
+    
     /// <summary>
-    /// Gets the first error message if any exist, otherwise returns null
+    /// Checks if the result contains a specific error code
     /// </summary>
-    public string? FirstError => Errors.FirstOrDefault();
+    public bool HasError(string errorCode)
+    {
+        return Errors.Any(e => e.Code == errorCode);
+    }
 
     /// <summary>
     /// Creates a successful result with no data
     /// </summary>
     public static Result Success()
     {
-        return new Result(true, new List<string>());
+        return new Result(true, new List<Error>());
     }
 
     /// <summary>
     /// Creates a failed result with a single error message
     /// </summary>
-    public static Result Failure(string error)
+    public static Result Failure(Error error)
     {
-        return new Result(false, new List<string> { error });
+        return new Result(false, new List<Error> { error });
     }
 
     /// <summary>
     /// Creates a failed result with multiple error messages
     /// </summary>
-    public static Result Failure(IEnumerable<string> errors)
+    public static Result Failure(IEnumerable<Error> errors)
     {
         return new Result(false, errors);
     }
@@ -70,7 +73,7 @@ public class Result
     /// Creates a failed result with data type (generic version)
     /// This is a convenience method that creates a Result<T>
     /// </summary>
-    public static Result<T> Failure<T>(string error)
+    public static Result<T> Failure<T>(Error error)
     {
         return Result<T>.Failure(error);
     }
@@ -78,7 +81,7 @@ public class Result
     /// <summary>
     /// Creates a failed result with multiple errors and data type (generic version)
     /// </summary>
-    public static Result<T> Failure<T>(IEnumerable<string> errors)
+    public static Result<T> Failure<T>(IEnumerable<Error> errors)
     {
         return Result<T>.Failure(errors);
     }
@@ -91,7 +94,7 @@ public class Result
 /// <typeparam name="T">The type of data returned on success</typeparam>
 public class Result<T> : Result
 {
-    private Result(bool isSuccess, T data, IEnumerable<string> errors)
+    private Result(bool isSuccess, T data, IEnumerable<Error> errors)
         : base(isSuccess, errors)
     {
         Data = data;
@@ -108,23 +111,23 @@ public class Result<T> : Result
     /// </summary>
     public static Result<T> Success(T data)
     {
-        return new Result<T>(true, data, new List<string>());
+        return new Result<T>(true, data, new List<Error>());
     }
 
     /// <summary>
     /// Creates a failed result with a single error message
     /// Data will be set to default(T)
     /// </summary>
-    public new static Result<T> Failure(string error)
+    public new static Result<T> Failure(Error error)
     {
-        return new Result<T>(false, default(T), new List<string> { error });
+        return new Result<T>(false, default(T), new List<Error> { error });
     }
 
     /// <summary>
     /// Creates a failed result with multiple error messages
     /// Data will be set to default(T)
     /// </summary>
-    public new static Result<T> Failure(IEnumerable<string> errors)
+    public new static Result<T> Failure(IEnumerable<Error> errors)
     {
         return new Result<T>(false, default(T), errors);
     }

@@ -16,7 +16,6 @@ public abstract class BaseApiController : ControllerBase
         return BadRequest(new
         {
             errors = result.Errors,
-            message = result.FirstError ?? "An error occurred"
         });
     }
     
@@ -30,7 +29,6 @@ public abstract class BaseApiController : ControllerBase
         return BadRequest(new
         {
             errors = result.Errors,
-            message = result.FirstError ?? "An error occurred"
         });
     }
     
@@ -42,34 +40,37 @@ public abstract class BaseApiController : ControllerBase
             return StatusCode(successStatusCode, result.Data);
         }
 
-        // Analyze errors to determine appropriate status code
         var statusCode = DetermineErrorStatusCode(result);
             
         return StatusCode(statusCode, new
         {
             errors = result.Errors,
-            message = result.FirstError ?? "An error occurred"
         });
     }
     
     private int DetermineErrorStatusCode<T>(Result<T> result)
     {
-        if (result.Errors.Any(e => e.Contains("not found", StringComparison.OrdinalIgnoreCase)))
+        if (result.Errors.Any(e => e.Code.Contains("NOT_FOUND", StringComparison.OrdinalIgnoreCase)))
         {
             return 404;
         }
             
-        if (result.Errors.Any(e => e.Contains("unauthorized", StringComparison.OrdinalIgnoreCase)))
+        if (result.Errors.Any(e => e.Code.Contains("UNAUTHORIZED", StringComparison.OrdinalIgnoreCase)))
         {
             return 401;
         }
             
-        if (result.Errors.Any(e => e.Contains("forbidden", StringComparison.OrdinalIgnoreCase)))
+        if (result.Errors.Any(e => e.Code.Contains("FORBIDDEN", StringComparison.OrdinalIgnoreCase)))
         {
             return 403;
         }
+        
+        if (result.Errors.Any(e => e.Code.Contains("CONFLICT", StringComparison.OrdinalIgnoreCase)))
+        {
+            return 409;
+        }
             
-        if (result.Errors.Any(e => e.Contains("validation", StringComparison.OrdinalIgnoreCase)))
+        if (result.Errors.Any(e => e.Code.Contains("VALIDATION", StringComparison.OrdinalIgnoreCase)))
         {
             return 422;
         }
@@ -87,7 +88,6 @@ public abstract class BaseApiController : ControllerBase
         return BadRequest(new
         {
             errors = result.Errors,
-            message = result.FirstError ?? "Creation failed"
         });
     }
     
@@ -101,7 +101,6 @@ public abstract class BaseApiController : ControllerBase
         return BadRequest(new
         {
             errors = result.Errors,
-            message = result.FirstError ?? "Deletion failed"
         });
     }
 }

@@ -28,7 +28,7 @@ public class UserManagementService : IUserManagementService
         {
             var existingUser = await _userRepository.GetByEmailAsync(email);
             if (existingUser != null)
-                return Result<UserDto>.Failure("User with this email already exists", ErrorType.Conflict);
+                return Result<UserDto>.Failure(Error.Conflict("Email already exists"));
 
             var user = new User
             {
@@ -48,7 +48,7 @@ public class UserManagementService : IUserManagementService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to register user with email {Email}: {ErrorMessage}", email, ex.Message);
-            return Result<UserDto>.Failure("An error occurred while creating the user account", ErrorType.Internal);
+            return Result<UserDto>.Failure(Error.InternalServerError("An error occurred while creating the user account"));
         }
     }
 }

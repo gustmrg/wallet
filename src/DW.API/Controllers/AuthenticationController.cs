@@ -24,15 +24,17 @@ public class AuthenticationController : BaseApiController
     }
     
     [HttpPost("register")]
-    public async Task<ActionResult<RegisterResponse>> Register(RegisterRequest request)
+    public async Task<IActionResult> Register(RegisterRequest request)
     {
         var validator = new RegisterRequestValidator();
         var validationResult = validator.Validate(request);
 
         if (!validationResult.IsValid)
         {
-            var validationErrors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
-            var failureResult = Result<RegisterResponse>.Failure(validationErrors, ErrorType.Validation);
+            var validationErrors = validationResult
+                .Errors.Select(error => Error.ValidationFailed(error.ErrorMessage)).ToList();
+
+            var failureResult = Result.Failure(validationErrors);
             return HandleResult(failureResult);    
         }
 
@@ -40,7 +42,7 @@ public class AuthenticationController : BaseApiController
 
         if (!registerResult.IsSuccess)
         {
-            return BadRequest();
+            return HandleResultWithStatus(registerResult);
         }
         
         var accessToken = _tokenService.GenerateAccessToken(registerResult.Data.Id, registerResult.Data.Email);
@@ -48,8 +50,6 @@ public class AuthenticationController : BaseApiController
 
         var response = new RegisterResponse
         {
-            IsSuccess = true,
-            Message = "User registered successfully",
             UserId = registerResult.Data.Id,
             Email = registerResult.Data.Email,
             AccessToken = accessToken,
