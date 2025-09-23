@@ -12,15 +12,18 @@ public class AuthenticationController : BaseApiController
     private readonly IUserManagementService _userManagementService;
     private readonly ITokenService _tokenService;
     private readonly IRefreshTokenService _refreshTokenService;
+    private readonly IAuthenticationService _authenticationService;
 
     public AuthenticationController(
         IUserManagementService userManagementService, 
         ITokenService tokenService, 
-        IRefreshTokenService refreshTokenService)
+        IRefreshTokenService refreshTokenService, 
+        IAuthenticationService authenticationService)
     {
         _userManagementService = userManagementService;
         _tokenService = tokenService;
         _refreshTokenService = refreshTokenService;
+        _authenticationService = authenticationService;
     }
     
     [HttpPost("register")]
@@ -60,7 +63,40 @@ public class AuthenticationController : BaseApiController
     }
     
     [HttpPost("login")]
-    public IActionResult Login(LoginRequest loginRequest)
+    public async Task<IActionResult> Login(LoginRequest loginRequest)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+        
+        var authenticateResult = await _authenticationService.AuthenticateUserAsync(loginRequest.Email, loginRequest.Password);
+        
+        if (!authenticateResult.IsSuccess)
+            return  HandleResultWithStatus(authenticateResult);
+        
+        var userResult = await _userManagementService.GetUserAsync(loginRequest.Email);
+
+        if (!userResult.IsSuccess)
+            return HandleResultWithStatus(userResult);
+
+        var response = new LoginResponse
+        {
+            UserId = userResult.Data.Id,
+            Email = userResult.Data.Email,
+            AccessToken = authenticateResult.Data.AccessToken,
+            RefreshToken = authenticateResult.Data.RefreshToken,
+        };
+        
+        return Ok(response);
+    }
+
+    [HttpPost("refresh")]
+    public IActionResult RefreshToken()
+    {
+        return Ok();
+    }
+
+    [HttpPost("logout")]
+    public IActionResult Logout()
     {
         return Ok();
     }

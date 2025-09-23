@@ -51,4 +51,15 @@ public class UserManagementService : IUserManagementService
             return Result<UserDto>.Failure(Error.InternalServerError("An error occurred while creating the user account"));
         }
     }
+
+    public async Task<Result<UserDto>> GetUserAsync(string email)
+    {
+        var user = await _userRepository.GetByEmailAsync(email);
+        
+        if (user == null)
+            return Result<UserDto>.Failure(Error.NotFound("User not found"));
+
+        var data = new UserDto { Id = user.Id, Email = user.Email };
+        return Result<UserDto>.Success(data);
+    }
 }

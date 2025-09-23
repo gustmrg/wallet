@@ -106,17 +106,11 @@ public class RefreshTokenService : IRefreshTokenService
         }
     }
 
-    public async Task RevokeAllUserTokensAsync(string userId, string reason)
+    public async Task RevokeAllUserTokensAsync(Guid userId, string reason)
     {
         try
         {
-            if (!Guid.TryParse(userId, out var userGuid))
-            {
-                _logger.LogWarning("Invalid user ID format: {UserId}", userId);
-                return;
-            }
-
-            await _refreshTokenRepository.RevokeAllUserTokensAsync(userGuid, reason, "unknown");
+            await _refreshTokenRepository.RevokeAllUserTokensAsync(userId, reason);
 
             _logger.LogInformation("All refresh tokens revoked for user {UserId}. Reason: {Reason}",
                 userId, reason);

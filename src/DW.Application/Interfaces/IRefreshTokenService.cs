@@ -27,5 +27,5 @@ public interface IRefreshTokenService
     /// Revokes all refresh tokens for a user, ending all sessions.
     /// Useful for security incidents or when user changes password.
     /// </summary>
-    Task RevokeAllUserTokensAsync(string userId, string reason);
+    Task RevokeAllUserTokensAsync(Guid userId, string reason);
 }
