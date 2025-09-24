@@ -1,3 +1,5 @@
+using DW.Application.Common;
+
 namespace DW.Application.Interfaces;
 
 /// <summary>
@@ -16,7 +18,7 @@ public interface IRefreshTokenService
     /// Validates a refresh token and marks it as used.
     /// Returns null if the token is invalid, expired, or revoked.
     /// </summary>
-    Task<string?> ValidateRefreshTokenAsync(string tokenValue);
+    Task<Result> ValidateRefreshTokenAsync(string tokenValue);
     
     /// <summary>
     /// Revokes a specific refresh token, ending that session.
@@ -28,4 +30,10 @@ public interface IRefreshTokenService
     /// Useful for security incidents or when user changes password.
     /// </summary>
     Task RevokeAllUserTokensAsync(Guid userId, string reason);
+
+    /// <summary>
+    /// Gets the user ID associated with a valid refresh token.
+    /// Returns null if token is invalid, expired, or revoked.
+    /// </summary>
+    Task<Guid?> GetUserIdFromTokenAsync(string tokenValue);
 }

@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using DW.Application.Common;
 using DW.Application.Interfaces;
 using DW.Domain.Entities;
 using DW.Domain.Interfaces;
@@ -48,29 +49,25 @@ public class RefreshTokenService : IRefreshTokenService
         }
     }
 
-    public async Task<string?> ValidateRefreshTokenAsync(string tokenValue)
+    public async Task<Result> ValidateRefreshTokenAsync(string tokenValue)
     {
         try
         {
             if (string.IsNullOrWhiteSpace(tokenValue))
-                return null;
+                return Result.Failure(Error.ValidationFailed("Token value is required"));
 
             var refreshToken = await _refreshTokenRepository.GetByTokenValueAsync(tokenValue);
 
-            if (refreshToken == null || !refreshToken.IsActive)
-            {
-                _logger.LogWarning("Invalid or inactive refresh token attempted: {TokenPrefix}",
-                    tokenValue[..Math.Min(8, tokenValue.Length)]);
-                return null;
-            }
+            if (refreshToken == null)
+                return Result.Failure(Error.NotFound("Refresh token not found"));
 
-            refreshToken.UsedAt = DateTime.UtcNow;
-            await _refreshTokenRepository.UpdateAsync(refreshToken);
+            if (refreshToken.IsExpired)
+                return Result.Failure(Error.ValidationFailed("Refresh token is expired"));
 
-            _logger.LogInformation("Refresh token validated and marked as used for user {UserId}",
-                refreshToken.UserId);
-
-            return refreshToken.UserId.ToString();
+            if (refreshToken.IsRevoked)
+                return Result.Failure(Error.ValidationFailed("Refresh token is revoked"));
+            
+            return Result.Success();
         }
         catch (Exception ex)
         {
@@ -121,6 +118,32 @@ public class RefreshTokenService : IRefreshTokenService
                 userId, reason);
             throw;
         }
+    }
+
+    public async Task<Guid?> GetUserIdFromTokenAsync(string tokenValue)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(tokenValue))
+                return null;
+
+            var refreshToken = await _refreshTokenRepository.GetByTokenValueAsync(tokenValue);
+
+            if (refreshToken == null || !refreshToken.IsActive)
+                return null;
+
+            return refreshToken.UserId;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting user ID from refresh token");
+            return null;
+        }
+    }
+
+    public async Task MarkRefreshTokenAsUsedAsync(RefreshToken refreshToken)
+    {
+        refreshToken.UsedAt = DateTime.UtcNow;
     }
 
     private static string GenerateSecureToken()

@@ -55,8 +55,16 @@ public class RefreshTokenRepository : IRefreshTokenRepository
         }
     }
 
-    public Task RevokeAllUserTokensAsync(Guid userId, string reason, string? revokedByIp = null)
+    public async Task RevokeAllUserTokensAsync(Guid userId, string reason, string? revokedByIp = null)
     {
-        throw new NotImplementedException();
+        var tokens = await GetActiveTokensByUserIdAsync(userId);
+
+        foreach (var token in tokens)
+        {
+            token.RevokedAt = DateTime.UtcNow;
+            token.RevokedReason = reason;
+        }
+        
+        await _context.SaveChangesAsync();
     }
 }

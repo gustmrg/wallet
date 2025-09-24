@@ -90,9 +90,44 @@ public class AuthenticationController : BaseApiController
     }
 
     [HttpPost("refresh")]
-    public IActionResult RefreshToken()
+    public async Task<IActionResult> RefreshToken(RefreshTokenRequest request)
     {
-        return Ok();
+        if (request == null)
+            return BadRequest("Request cannot be null");
+
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        // Get user ID from the refresh token
+        var userId = await _refreshTokenService.GetUserIdFromTokenAsync(request.RefreshToken);
+
+        if (!userId.HasValue)
+            return Unauthorized("Invalid or expired refresh token");
+
+        // Validate the refresh token
+        var validationResult = await _refreshTokenService.ValidateRefreshTokenAsync(request.RefreshToken);
+
+        if (!validationResult.IsSuccess)
+            return Unauthorized("Invalid or expired refresh token");
+
+        // Generate new tokens
+        var tokenResult = await _authenticationService.IssueNewTokensAsync(userId.Value);
+
+        if (!tokenResult.IsSuccess)
+            return HandleResultWithStatus(tokenResult);
+
+        // Revoke the used refresh token
+        await _refreshTokenService.RevokeRefreshTokenAsync(request.RefreshToken, "Token refreshed");
+
+        var response = new LoginResponse
+        {
+            UserId = userId.Value,
+            Email = "", // We don't expose email in refresh response for security
+            AccessToken = tokenResult.Data.AccessToken,
+            RefreshToken = tokenResult.Data.RefreshToken,
+        };
+
+        return Ok(response);
     }
 
     [HttpPost("logout")]
